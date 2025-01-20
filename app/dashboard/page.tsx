@@ -17,54 +17,63 @@ const stats = [
     icon: Users,
     color: 'text-sky-500',
     bgColor: 'bg-sky-100',
+    total: 10,
   },
   {
     label: 'Products',
     icon: ShoppingBag,
     color: 'text-violet-500',
     bgColor: 'bg-violet-100',
+    total: 15,
   },
   {
     label: 'Posts',
     icon: FileText,
     color: 'text-pink-700',
     bgColor: 'bg-pink-100',
+    total: 18,
   },
   {
     label: 'Comments',
     icon: MessageSquare,
     color: 'text-orange-700',
     bgColor: 'bg-orange-100',
+    total: 21,
   },
   {
     label: 'Reactions',
     icon: Heart,
     color: 'text-rose-500',
     bgColor: 'bg-rose-100',
+    total: 3,
   },
   {
     label: 'Categories',
     icon: Tag,
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-100',
+    total: 9,
   },
   {
     label: 'Orders',
     icon: ShoppingCart,
     color: 'text-green-700',
     bgColor: 'bg-green-100',
+    total: 106,
   },
   {
     label: 'Appointments',
     icon: Calendar,
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
+    total: 27,
   },
   {
     label: 'Locations',
     icon: MapPin,
     color: 'text-yellow-700',
     bgColor: 'bg-yellow-100',
+    total: 2,
   },
 ];
 
@@ -83,7 +92,7 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Total {stat.label}
                 </p>
-                <h3 className="text-2xl font-bold">0</h3>
+                <h3 className="text-2xl font-bold">{stat.total}</h3>
               </div>
             </div>
           </Card>

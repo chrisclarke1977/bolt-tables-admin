@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { UserPlus, Search, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -30,12 +31,26 @@ interface User {
   created_at: string;
 }
 
+interface UserFormData {
+  email: string;
+  password: string;
+  full_name: string;
+  avatar_url: string;
+}
+
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newUser, setNewUser] = useState<UserFormData>({
+    email: '',
+    password: '',
+    full_name: '',
+    avatar_url: '',
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -73,6 +88,55 @@ export default function UsersPage() {
     }
   };
 
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // First, create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newUser.email,
+        password: newUser.password,
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Then, add the user profile
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: authData.user.id,
+              email: newUser.email,
+              full_name: newUser.full_name,
+              avatar_url: newUser.avatar_url,
+            },
+          ]);
+
+        if (profileError) throw profileError;
+
+        toast({
+          title: 'Success',
+          description: 'User created successfully',
+        });
+
+        setIsAddDialogOpen(false);
+        setNewUser({
+          email: '',
+          password: '',
+          full_name: '',
+          avatar_url: '',
+        });
+        fetchUsers();
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error creating user',
+        description: error.message,
+      });
+    }
+  };
+
   const handleUpdateUser = async (userId: string, updates: Partial<User>) => {
     try {
       const { error } = await supabase
@@ -101,6 +165,11 @@ export default function UsersPage() {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
+      // First delete from auth
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      if (authError) throw authError;
+
+      // Then delete from users table
       const { error } = await supabase
         .from('users')
         .delete()
@@ -131,7 +200,7 @@ export default function UsersPage() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Users</h2>
-        <Dialog>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <UserPlus className="h-4 w-4 mr-2" />
@@ -142,7 +211,64 @@ export default function UsersPage() {
             <DialogHeader>
               <DialogTitle>Add New User</DialogTitle>
             </DialogHeader>
-            {/* Add user form will be implemented here */}
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="full_name" className="text-sm font-medium">
+                  Full Name
+                </label>
+                <Input
+                  id="full_name"
+                  required
+                  value={newUser.full_name}
+                  onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="avatar_url" className="text-sm font-medium">
+                  Avatar URL
+                </label>
+                <Input
+                  id="avatar_url"
+                  type="url"
+                  value={newUser.avatar_url}
+                  onChange={(e) => setNewUser({ ...newUser, avatar_url: e.target.value })}
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Create User</Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
@@ -233,26 +359,26 @@ export default function UsersPage() {
               className="space-y-4"
             >
               <div className="space-y-2">
-                <label htmlFor="full_name" className="text-sm font-medium">
+                <label htmlFor="edit_full_name" className="text-sm font-medium">
                   Full Name
                 </label>
                 <Input
-                  id="full_name"
+                  id="edit_full_name"
                   name="full_name"
                   defaultValue={selectedUser.full_name || ''}
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="avatar_url" className="text-sm font-medium">
+                <label htmlFor="edit_avatar_url" className="text-sm font-medium">
                   Avatar URL
                 </label>
                 <Input
-                  id="avatar_url"
+                  id="edit_avatar_url"
                   name="avatar_url"
                   defaultValue={selectedUser.avatar_url || ''}
                 />
               </div>
-              <div className="flex justify-end gap-2">
+              <DialogFooter>
                 <Button
                   type="button"
                   variant="outline"
@@ -261,7 +387,7 @@ export default function UsersPage() {
                   Cancel
                 </Button>
                 <Button type="submit">Save Changes</Button>
-              </div>
+              </DialogFooter>
             </form>
           )}
         </DialogContent>
