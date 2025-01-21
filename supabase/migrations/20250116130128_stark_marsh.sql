@@ -94,7 +94,7 @@
 */
 
 -- Create users table that extends auth.users
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id uuid PRIMARY KEY REFERENCES auth.users,
   full_name text,
   avatar_url text,
@@ -103,7 +103,7 @@ CREATE TABLE users (
 );
 
 -- Create categories table
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   description text,
@@ -112,7 +112,7 @@ CREATE TABLE categories (
 );
 
 -- Create products table
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   description text,
@@ -124,7 +124,7 @@ CREATE TABLE products (
 );
 
 -- Create orders table
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES users NOT NULL,
   status text NOT NULL DEFAULT 'pending',
@@ -134,7 +134,7 @@ CREATE TABLE orders (
 );
 
 -- Create order_items table
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id uuid REFERENCES orders NOT NULL,
   product_id uuid REFERENCES products NOT NULL,
@@ -144,7 +144,7 @@ CREATE TABLE order_items (
 );
 
 -- Create posts table
-CREATE TABLE posts (
+CREATE TABLE IF NOT EXISTS posts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title text NOT NULL,
   content text NOT NULL,
@@ -155,7 +155,7 @@ CREATE TABLE posts (
 );
 
 -- Create comments table
-CREATE TABLE comments (
+CREATE TABLE IF NOT EXISTS comments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   content text NOT NULL,
   user_id uuid REFERENCES users NOT NULL,
@@ -165,7 +165,7 @@ CREATE TABLE comments (
 );
 
 -- Create reactions table
-CREATE TABLE reactions (
+CREATE TABLE IF NOT EXISTS reactions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES users NOT NULL,
   post_id uuid REFERENCES posts NOT NULL,
@@ -175,7 +175,7 @@ CREATE TABLE reactions (
 );
 
 -- Create locations table
-CREATE TABLE locations (
+CREATE TABLE IF NOT EXISTS locations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   address text NOT NULL,
@@ -188,7 +188,7 @@ CREATE TABLE locations (
 );
 
 -- Create appointments table
-CREATE TABLE appointments (
+CREATE TABLE IF NOT EXISTS appointments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES users NOT NULL,
   location_id uuid REFERENCES locations NOT NULL,
@@ -227,6 +227,16 @@ CREATE POLICY "Users can update their own profile"
 -- Categories policies (public read, admin write)
 CREATE POLICY "Anyone can view categories"
   ON categories FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Anyone can add categories"
+  ON categories FOR INSERT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Anyone can update categories"
+  ON categories FOR UPDATE
   TO authenticated
   USING (true);
 
@@ -298,9 +308,24 @@ CREATE POLICY "Users can create reactions"
   TO authenticated
   WITH CHECK (user_id = auth.uid());
 
+CREATE POLICY "Users can update reactions"
+  ON reactions FOR UPDATE
+  TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
 -- Locations policies (public read)
 CREATE POLICY "Anyone can view locations"
   ON locations FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Anyone can add locations"
+  ON locations FOR INSERT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Anyone can update locations"
+  ON locations FOR UPDATE
   TO authenticated
   USING (true);
 
